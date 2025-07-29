@@ -324,39 +324,70 @@
   }
 
   function toggleWidget() {
+    console.log('HDC Chat: Toggling widget, currently open:', state.isOpen);
     const widget = document.getElementById('hdc-chat-widget');
     state.isOpen = !state.isOpen;
     
     if (state.isOpen) {
+      console.log('HDC Chat: Opening widget and connecting to server');
       widget.style.display = 'flex';
-      if (!state.isConnected) {
-        connectToServer();
+      connectToServer();
+      
+      // Show survey if not completed
+      if (!state.surveyCompleted) {
+        console.log('HDC Chat: Survey not completed, showing survey');
+        showSurvey();
+      } else {
+        console.log('HDC Chat: Survey already completed');
       }
     } else {
+      console.log('HDC Chat: Closing widget');
       widget.style.display = 'none';
     }
   }
 
   function connectToServer() {
-    // Load Socket.IO from CDN
-    if (!window.io) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
-      script.onload = initializeSocket;
-      document.head.appendChild(script);
-    } else {
+    console.log('HDC Chat: Attempting to connect to server at:', config.apiUrl);
+    if (!state.socket) {
       initializeSocket();
+    }
+    
+    if (state.socket && !state.isConnected) {
+      state.socket.connect();
     }
   }
 
   function initializeSocket() {
+    console.log('HDC Chat: Initializing socket connection to:', config.apiUrl);
+    
+    // Load Socket.IO from the server
+    if (!window.io) {
+      console.log('HDC Chat: Loading Socket.IO library from server');
+      const script = document.createElement('script');
+      script.src = config.apiUrl + '/socket.io/socket.io.js';
+      script.onload = () => {
+        console.log('HDC Chat: Socket.IO library loaded, creating connection');
+        createSocketConnection();
+      };
+      script.onerror = () => {
+        console.error('HDC Chat: Failed to load Socket.IO library');
+      };
+      document.head.appendChild(script);
+    } else {
+      createSocketConnection();
+    }
+  }
+  
+  function createSocketConnection() {
+    console.log('HDC Chat: Creating socket connection');
     state.socket = io(config.apiUrl);
     
     state.socket.on('connect', () => {
-      console.log('Connected to HDC Live Chat');
+      console.log('HDC Chat: Successfully connected to server');
       state.isConnected = true;
       
       // Join chat
+      console.log('HDC Chat: Joining chat with customer ID:', state.customerId);
       state.socket.emit('join_chat', {
         customerId: state.customerId,
         customerInfo: getCustomerInfo()
@@ -471,9 +502,22 @@
     const input = document.getElementById('hdc-message-input');
     const message = input.value.trim();
     
-    if (!message || !state.socket) return;
+    console.log('HDC Chat: Attempting to send message:', message);
+    console.log('HDC Chat: Socket connected?', state.isConnected);
+    console.log('HDC Chat: Socket object:', state.socket);
+    
+    if (!message) {
+      console.log('HDC Chat: Empty message, not sending');
+      return;
+    }
+    
+    if (!state.socket) {
+      console.error('HDC Chat: No socket connection available');
+      return;
+    }
     
     // Display message immediately
+    console.log('HDC Chat: Displaying message locally');
     displayMessage({
       id: 'temp_' + Date.now(),
       sender: 'customer',
@@ -482,6 +526,7 @@
     });
     
     // Send to server
+    console.log('HDC Chat: Emitting send_message event to server');
     state.socket.emit('send_message', {
       content: message,
       messageId: 'msg_' + Date.now()
