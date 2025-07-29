@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HDC Live Chat - Admin Dashboard</title>
     <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="settings.css">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
@@ -150,6 +151,77 @@
             </div>
         </div>
 
+        <!-- Settings View -->
+        <div id="settings-view" class="view" style="display: none;">
+            <div class="view-header">
+                <h2>Settings</h2>
+                <p>Configure your AI prompts and system settings</p>
+            </div>
+
+            <div class="settings-content">
+                <div class="settings-tabs">
+                    <button class="tab-btn active" data-tab="ai">AI Configuration</button>
+                    <button class="tab-btn" data-tab="general">General Settings</button>
+                </div>
+
+                <!-- AI Settings Tab -->
+                <div id="ai-tab" class="tab-content active">
+                    <div class="setting-group">
+                        <label for="ai-system-prompt">AI System Prompt</label>
+                        <textarea id="ai-system-prompt" rows="10" placeholder="Enter your AI system prompt...">
+                        </textarea>
+                        <small>This prompt defines how your AI assistant behaves and responds to customers.</small>
+                        <button class="btn btn-primary" onclick="saveAIPrompt()">Save AI Prompt</button>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="ai-model">AI Model</label>
+                        <select id="ai-model">
+                            <option value="gpt-4">GPT-4 (Recommended)</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="ai-max-tokens">Max Response Length</label>
+                        <input type="number" id="ai-max-tokens" min="50" max="1000" value="300">
+                        <small>Maximum number of tokens (words) in AI responses</small>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="ai-temperature">AI Creativity</label>
+                        <input type="range" id="ai-temperature" min="0" max="1" step="0.1" value="0.7">
+                        <div class="range-labels">
+                            <span>Focused (0.0)</span>
+                            <span id="temperature-value">0.7</span>
+                            <span>Creative (1.0)</span>
+                        </div>
+                        <small>Higher values make responses more creative but less predictable</small>
+                    </div>
+                </div>
+
+                <!-- General Settings Tab -->
+                <div id="general-tab" class="tab-content">
+                    <div class="setting-group">
+                        <label for="store-name">Store Name</label>
+                        <input type="text" id="store-name" placeholder="Your Store Name">
+                        <small>Name displayed in the chat widget</small>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="support-email">Support Email</label>
+                        <input type="email" id="support-email" placeholder="support@yourstore.com">
+                        <small>Email address for customer support inquiries</small>
+                    </div>
+                </div>
+
+                <div class="settings-actions">
+                    <button class="btn btn-primary" onclick="saveAllSettings()">Save All Settings</button>
+                    <button class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Chat Modal -->
         <div id="chat-modal" class="modal">
             <div class="modal-content chat-modal-content">
@@ -208,5 +280,6 @@
     </div>
 
     <script src="admin.js"></script>
+    <script src="settings.js"></script>
 </body>
 </html>

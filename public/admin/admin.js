@@ -46,13 +46,18 @@ class AdminDashboard {
 
     setupEventListeners() {
         // Navigation
-        document.querySelectorAll('.nav-item').forEach(item => {
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const view = item.dataset.view;
                 this.switchView(view);
             });
         });
+        
+        // Setup settings tab functionality
+        this.setupSettingsTabs();
+        this.setupSettingsHandlers();
 
         // Search and filters
         document.getElementById('search-input')?.addEventListener('input', 
@@ -110,6 +115,9 @@ class AdminDashboard {
                     break;
                 case 'analytics':
                     this.loadAnalytics();
+                    break;
+                case 'settings':
+                    this.loadSettings();
                     break;
             }
         }
