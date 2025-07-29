@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const chatRoutes = require('./routes/chat');
 const adminRoutes = require('./routes/admin');
+const settingsRoutes = require('./routes/settings');
 const { initializeDatabase } = require('./config/database');
 const { setupSocketHandlers } = require('./socket/handlers');
 
@@ -29,6 +30,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Routes
 app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Serve admin dashboard
 app.get('/admin', (req, res) => {

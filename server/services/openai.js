@@ -1,5 +1,6 @@
 const OpenAI = require('openai');
 const Product = require('../models/Product');
+const Settings = require('../models/Settings');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -7,7 +8,8 @@ const openai = new OpenAI({
 
 class OpenAIService {
   constructor() {
-    this.systemPrompt = `You are a helpful customer service representative for HDC store. You should:
+    // Default fallback prompt if database setting doesn't exist
+    this.defaultSystemPrompt = `You are a helpful customer service representative for HDC store. You should:
 
 1. Be friendly, professional, and helpful
 2. Answer questions about products based on the product information provided
@@ -19,14 +21,35 @@ class OpenAIService {
 Product Information will be provided in the context when available.`;
   }
 
+  async getSystemPrompt() {
+    try {
+      const promptSetting = await Settings.findOne({
+        where: { key: 'ai_system_prompt' }
+      });
+      
+      if (promptSetting && promptSetting.value) {
+        console.log('🤖 Using custom AI prompt from database');
+        return promptSetting.value;
+      }
+      
+      console.log('🤖 Using default AI prompt (no custom prompt set)');
+      return this.defaultSystemPrompt;
+    } catch (error) {
+      console.error('Error fetching AI prompt from database:', error);
+      console.log('🤖 Falling back to default AI prompt');
+      return this.defaultSystemPrompt;
+    }
+  }
+
   async generateResponse(message, conversationHistory = [], customerInfo = {}) {
     try {
       // Get relevant product information
       const productContext = await this.getProductContext(message);
       
       // Build conversation context
+      const systemPrompt = await this.buildSystemPrompt(productContext, customerInfo);
       const messages = [
-        { role: 'system', content: this.buildSystemPrompt(productContext, customerInfo) },
+        { role: 'system', content: systemPrompt },
         ...this.formatConversationHistory(conversationHistory),
         { role: 'user', content: message }
       ];
@@ -94,8 +117,8 @@ Product Information will be provided in the context when available.`;
     }
   }
 
-  buildSystemPrompt(productContext, customerInfo) {
-    let prompt = this.systemPrompt;
+  async buildSystemPrompt(productContext, customerInfo) {
+    let prompt = await this.getSystemPrompt();
     
     if (customerInfo.name) {
       prompt += `\n\nCustomer's name is ${customerInfo.name}.`;
