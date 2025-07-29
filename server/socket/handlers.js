@@ -13,21 +13,25 @@ const setupSocketHandlers = (io) => {
     socket.on('join_chat', async (data) => {
       try {
         const { customerId, customerInfo } = data;
+        console.log('🔌 Customer joining chat:', customerId);
         
-        // Find or create conversation
+        // Find or create conversation (PostgreSQL/Sequelize syntax)
         let conversation = await Conversation.findOne({ 
-          customerId, 
-          isLive: true 
-        }).sort({ createdAt: -1 });
+          where: {
+            customerId, 
+            isLive: true 
+          },
+          order: [['createdAt', 'DESC']]
+        });
 
         if (!conversation) {
-          conversation = new Conversation({
+          console.log('📝 Creating new conversation for customer:', customerId);
+          conversation = await Conversation.create({
             id: uuidv4(),
             customerId,
             customerInfo,
             status: 'survey'
           });
-          await conversation.save();
         }
 
         // Store connection
@@ -72,13 +76,23 @@ const setupSocketHandlers = (io) => {
     // Handle customer messages
     socket.on('send_message', async (data) => {
       try {
+        console.log('💬 Received message:', data);
         const connection = activeConnections.get(socket.id);
-        if (!connection) return;
+        if (!connection) {
+          console.log('❌ No active connection found for socket:', socket.id);
+          return;
+        }
 
         const { content, messageId } = data;
-        const conversation = await Conversation.findOne({ id: connection.conversationId });
+        console.log('🔍 Looking for conversation:', connection.conversationId);
+        const conversation = await Conversation.findOne({ 
+          where: { id: connection.conversationId }
+        });
         
-        if (!conversation) return;
+        if (!conversation) {
+          console.log('❌ Conversation not found:', connection.conversationId);
+          return;
+        }
 
         // Add customer message
         const customerMessage = {
@@ -88,8 +102,10 @@ const setupSocketHandlers = (io) => {
           timestamp: new Date()
         };
 
-        conversation.messages.push(customerMessage);
-        await conversation.save();
+        console.log('📝 Adding message to conversation:', customerMessage);
+        // Update messages array and save (PostgreSQL JSONB)
+        const updatedMessages = [...(conversation.messages || []), customerMessage];
+        await conversation.update({ messages: updatedMessages });
 
         // Broadcast to conversation participants
         io.to(conversation.id).emit('message_received', customerMessage);
@@ -115,21 +131,34 @@ const setupSocketHandlers = (io) => {
     // Handle survey responses
     socket.on('survey_response', async (data) => {
       try {
+        console.log('📋 Survey response received:', data);
         const connection = activeConnections.get(socket.id);
         if (!connection) return;
 
         const { field, value } = data;
-        const conversation = await Conversation.findOne({ id: connection.conversationId });
+        const conversation = await Conversation.findOne({ 
+          where: { id: connection.conversationId }
+        });
         
         if (!conversation) return;
 
-        // Update customer info
-        conversation.customerInfo[field] = value;
+        // Update customer info (PostgreSQL JSONB)
+        const updatedCustomerInfo = {
+          ...(conversation.customerInfo || {}),
+          [field]: value
+        };
         
         // Check if survey is complete
-        if (conversation.customerInfo.name && conversation.customerInfo.email) {
-          conversation.surveyCompleted = true;
-          conversation.status = 'ai_active';
+        const hasName = updatedCustomerInfo.name;
+        const hasEmail = updatedCustomerInfo.email;
+        
+        let updatedMessages = conversation.messages || [];
+        let surveyCompleted = conversation.surveyCompleted;
+        let status = conversation.status;
+        
+        if (hasName && hasEmail && !surveyCompleted) {
+          surveyCompleted = true;
+          status = 'ai_active';
           
           // Send handoff message
           const handoffMessage = {
@@ -139,10 +168,16 @@ const setupSocketHandlers = (io) => {
             timestamp: new Date()
           };
           
-          conversation.messages.push(handoffMessage);
+          updatedMessages = [...updatedMessages, handoffMessage];
         }
 
-        await conversation.save();
+        // Update conversation with PostgreSQL syntax
+        await conversation.update({
+          customerInfo: updatedCustomerInfo,
+          messages: updatedMessages,
+          surveyCompleted,
+          status
+        });
 
         socket.emit('survey_updated', {
           surveyCompleted: conversation.surveyCompleted,
