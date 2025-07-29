@@ -13,6 +13,6 @@ services:
       # Add OPENAI_API_KEY and MONGODB_URI in Render dashboard
 
 databases:
-  - name: hdc-chat-mongodb
+  - name: hdc-chat-postgres
     databaseName: hdc_live_chat
     user: hdc_user

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const { initializeDatabase } = require('./config/database');
 const Product = require('./models/Product');
 require('dotenv').config();
 
@@ -86,21 +86,16 @@ const sampleProducts = [
 
 async function seedDatabase() {
   try {
-    // Connect to MongoDB
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/hdc-live-chat';
-    await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    
-    console.log('Connected to MongoDB');
+    // Initialize PostgreSQL connection
+    await initializeDatabase();
+    console.log('Connected to PostgreSQL');
 
     // Clear existing products
-    await Product.deleteMany({});
+    await Product.destroy({ where: {} });
     console.log('Cleared existing products');
 
     // Insert sample products
-    await Product.insertMany(sampleProducts);
+    await Product.bulkCreate(sampleProducts);
     console.log(`Inserted ${sampleProducts.length} sample products`);
 
     console.log('Database seeded successfully!');

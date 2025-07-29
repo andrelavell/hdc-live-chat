@@ -1,40 +1,71 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const productSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  description: { type: String, required: true },
-  price: { type: Number, required: true },
-  category: { type: String, required: true },
-  tags: [String],
-  features: [String],
+const Product = sequelize.define('Product', {
+  id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    allowNull: false
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  },
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  category: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  tags: {
+    type: DataTypes.JSONB,
+    defaultValue: []
+  },
+  features: {
+    type: DataTypes.JSONB,
+    defaultValue: []
+  },
   specifications: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
+    type: DataTypes.JSONB,
+    defaultValue: {}
   },
   availability: {
-    inStock: { type: Boolean, default: true },
-    quantity: { type: Number, default: 0 }
+    type: DataTypes.JSONB,
+    defaultValue: {
+      inStock: true,
+      quantity: 0
+    }
   },
-  images: [String],
-  shopifyProductId: String,
-  aiContext: { 
-    type: String, 
-    required: true,
-    description: "Detailed information for AI to reference when answering customer questions"
+  images: {
+    type: DataTypes.JSONB,
+    defaultValue: []
   },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  shopifyProductId: {
+    type: DataTypes.STRING
+  },
+  aiContext: {
+    type: DataTypes.TEXT,
+    allowNull: false
+  }
+}, {
+  timestamps: true, // This adds createdAt and updatedAt automatically
+  indexes: [
+    {
+      fields: ['name']
+    },
+    {
+      fields: ['category']
+    },
+    {
+      fields: ['description']
+    }
+  ]
 });
 
-// Update the updatedAt field on save
-productSchema.pre('save', function(next) {
-  this.updatedAt = new Date();
-  next();
-});
-
-// Index for search performance
-productSchema.index({ name: 'text', description: 'text', tags: 'text' });
-productSchema.index({ category: 1 });
-
-module.exports = mongoose.model('Product', productSchema);
+module.exports = Product;

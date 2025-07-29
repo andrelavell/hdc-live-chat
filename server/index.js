@@ -3,7 +3,6 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const path = require('path');
-const mongoose = require('mongoose');
 require('dotenv').config();
 
 const chatRoutes = require('./routes/chat');
@@ -43,7 +42,17 @@ app.get('/widget/chat-widget.js', (req, res) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  const { sequelize } = require('./config/database');
+  let dbStatus = 'disconnected';
+  
+  try {
+    if (sequelize && sequelize.authenticate) {
+      dbStatus = 'connected';
+    }
+  } catch (error) {
+    dbStatus = 'disconnected';
+  }
+  
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
