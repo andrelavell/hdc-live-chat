@@ -3,6 +3,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const path = require('path');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 const chatRoutes = require('./routes/chat');
@@ -42,20 +43,28 @@ app.get('/widget/chat-widget.js', (req, res) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    database: dbStatus,
+    version: '1.0.0'
+  });
 });
-
-// Initialize database and socket handlers
-initializeDatabase();
-setupSocketHandlers(io);
 
 // Make io available to routes
 app.set('io', io);
 
+// Start server first
 server.listen(PORT, () => {
   console.log(`🚀 HDC Live Chat server running on port ${PORT}`);
   console.log(`📊 Admin dashboard: http://localhost:${PORT}/admin`);
   console.log(`💬 Widget endpoint: http://localhost:${PORT}/widget/chat-widget.js`);
+  console.log(`🔍 Health check: http://localhost:${PORT}/health`);
 });
+
+// Initialize database and socket handlers after server starts
+initializeDatabase();
+setupSocketHandlers(io);
 
 module.exports = { app, io };

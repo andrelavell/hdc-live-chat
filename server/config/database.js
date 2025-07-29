@@ -12,7 +12,8 @@ const initializeDatabase = async () => {
     console.log('✅ Connected to MongoDB');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
-    process.exit(1);
+    console.log('⚠️  Server will continue without database functionality');
+    // Don't exit - let the server run without database
   }
 };
 
