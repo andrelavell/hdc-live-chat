@@ -16,25 +16,28 @@ router.get('/conversations', async (req, res) => {
       search 
     } = req.query;
 
-    let query = {};
+    const { Op } = require('sequelize');
+    let whereClause = {};
     
-    if (status) query.status = status;
-    if (isLive !== undefined) query.isLive = isLive === 'true';
-    if (agentId) query.agentId = agentId;
+    if (status) whereClause.status = status;
+    if (isLive !== undefined) whereClause.isLive = isLive === 'true';
+    if (agentId) whereClause.agentId = agentId;
     if (search) {
-      query.$or = [
-        { 'customerInfo.name': { $regex: search, $options: 'i' } },
-        { 'customerInfo.email': { $regex: search, $options: 'i' } }
+      whereClause[Op.or] = [
+        { '$customerInfo.name$': { [Op.iLike]: `%${search}%` } },
+        { '$customerInfo.email$': { [Op.iLike]: `%${search}%` } }
       ];
     }
 
-    const conversations = await Conversation.find(query)
-      .sort({ updatedAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .select('-messages'); // Exclude messages for performance
+    const conversations = await Conversation.findAll({
+      where: whereClause,
+      order: [['updatedAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: (parseInt(page) - 1) * parseInt(limit),
+      attributes: { exclude: ['messages'] } // Exclude messages for performance
+    });
 
-    const total = await Conversation.countDocuments(query);
+    const total = await Conversation.count({ where: whereClause });
 
     res.json({
       conversations: conversations.map(conv => ({
@@ -66,7 +69,9 @@ router.get('/conversations', async (req, res) => {
 router.get('/conversations/:conversationId', async (req, res) => {
   try {
     const { conversationId } = req.params;
-    const conversation = await Conversation.findOne({ id: conversationId });
+    const conversation = await Conversation.findOne({ 
+      where: { id: conversationId }
+    });
     
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
@@ -142,21 +147,27 @@ router.get('/dashboard', async (req, res) => {
 router.get('/products', async (req, res) => {
   try {
     const { page = 1, limit = 20, search, category } = req.query;
-    let query = {};
+    const { Op } = require('sequelize');
+    let whereClause = {};
 
     if (search) {
-      query.$text = { $search: search };
+      whereClause[Op.or] = [
+        { name: { [Op.iLike]: `%${search}%` } },
+        { description: { [Op.iLike]: `%${search}%` } }
+      ];
     }
     if (category) {
-      query.category = category;
+      whereClause.category = category;
     }
 
-    const products = await Product.find(query)
-      .sort({ updatedAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    const products = await Product.findAll({
+      where: whereClause,
+      order: [['updatedAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: (parseInt(page) - 1) * parseInt(limit)
+    });
 
-    const total = await Product.countDocuments(query);
+    const total = await Product.count({ where: whereClause });
 
     res.json({
       products,
@@ -180,19 +191,17 @@ router.post('/products', async (req, res) => {
     
     if (productData.id) {
       // Update existing product
-      const product = await Product.findOneAndUpdate(
-        { id: productData.id },
+      const [product, created] = await Product.upsert(
         productData,
-        { new: true, upsert: true }
+        { returning: true }
       );
       res.json(product);
     } else {
       // Create new product
-      const product = new Product({
+      const product = await Product.create({
         ...productData,
         id: require('uuid').v4()
       });
-      await product.save();
       res.status(201).json(product);
     }
   } catch (error) {
@@ -205,7 +214,7 @@ router.post('/products', async (req, res) => {
 router.delete('/products/:productId', async (req, res) => {
   try {
     const { productId } = req.params;
-    await Product.findOneAndDelete({ id: productId });
+    await Product.destroy({ where: { id: productId } });
     res.json({ success: true });
   } catch (error) {
     console.error('Error deleting product:', error);
@@ -217,28 +226,27 @@ router.delete('/products/:productId', async (req, res) => {
 router.get('/analytics', async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const dateFilter = {};
+    const { Op, fn, col } = require('sequelize');
+    let whereClause = {};
     
-    if (startDate) dateFilter.$gte = new Date(startDate);
-    if (endDate) dateFilter.$lte = new Date(endDate);
-    
-    const matchStage = Object.keys(dateFilter).length > 0 
-      ? { createdAt: dateFilter } 
-      : {};
+    if (startDate || endDate) {
+      whereClause.createdAt = {};
+      if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+      if (endDate) whereClause.createdAt[Op.lte] = new Date(endDate);
+    }
 
-    const analytics = await Conversation.aggregate([
-      { $match: matchStage },
-      {
-        $group: {
-          _id: {
-            date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-            status: "$status"
-          },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { "_id.date": 1 } }
-    ]);
+    // PostgreSQL equivalent of MongoDB aggregation
+    const analytics = await Conversation.findAll({
+      where: whereClause,
+      attributes: [
+        [fn('DATE', col('createdAt')), 'date'],
+        'status',
+        [fn('COUNT', '*'), 'count']
+      ],
+      group: [fn('DATE', col('createdAt')), 'status'],
+      order: [[fn('DATE', col('createdAt')), 'ASC']],
+      raw: true
+    });
 
     res.json(analytics);
   } catch (error) {
