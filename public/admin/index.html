@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HDC Live Chat - Admin Dashboard</title>
+    <link rel="stylesheet" href="admin.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>HDC Live Chat</h2>
+                <span class="admin-badge">Admin</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-view="dashboard">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </a>
+                <a href="#conversations" class="nav-item" data-view="conversations">
+                    <span class="nav-icon">💬</span>
+                    Conversations
+                    <span class="badge" id="live-count">0</span>
+                </a>
+                <a href="#products" class="nav-item" data-view="products">
+                    <span class="nav-icon">📦</span>
+                    Products
+                </a>
+                <a href="#analytics" class="nav-item" data-view="analytics">
+                    <span class="nav-icon">📈</span>
+                    Analytics
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="view active">
+                <div class="view-header">
+                    <h1>Dashboard</h1>
+                    <div class="agent-status">
+                        <span class="status-indicator online"></span>
+                        <span>Agent Online</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-conversations">0</div>
+                        <div class="stat-label">Total Conversations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="live-conversations">0</div>
+                        <div class="stat-label">Live Conversations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="ai-active">0</div>
+                        <div class="stat-label">AI Active</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="agent-takeover">0</div>
+                        <div class="stat-label">Agent Takeover</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-sections">
+                    <div class="section">
+                        <h3>Live Conversations</h3>
+                        <div class="live-conversations" id="live-conversations-list">
+                            <!-- Live conversations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversations View -->
+            <div id="conversations-view" class="view">
+                <div class="view-header">
+                    <h1>Conversations</h1>
+                    <div class="view-controls">
+                        <select id="status-filter">
+                            <option value="">All Status</option>
+                            <option value="survey">Survey</option>
+                            <option value="ai_active">AI Active</option>
+                            <option value="agent_takeover">Agent Takeover</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                        <input type="text" id="search-input" placeholder="Search customers...">
+                    </div>
+                </div>
+
+                <div class="conversations-table">
+                    <table id="conversations-table">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Messages</th>
+                                <th>Agent</th>
+                                <th>Last Activity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="conversations-tbody">
+                            <!-- Conversations will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="conversations-pagination">
+                    <!-- Pagination will be populated here -->
+                </div>
+            </div>
+
+            <!-- Products View -->
+            <div id="products-view" class="view">
+                <div class="view-header">
+                    <h1>Products</h1>
+                    <button class="btn btn-primary" onclick="showProductModal()">Add Product</button>
+                </div>
+
+                <div class="products-grid" id="products-grid">
+                    <!-- Products will be populated here -->
+                </div>
+            </div>
+
+            <!-- Analytics View -->
+            <div id="analytics-view" class="view">
+                <div class="view-header">
+                    <h1>Analytics</h1>
+                    <div class="date-range">
+                        <input type="date" id="start-date">
+                        <input type="date" id="end-date">
+                        <button class="btn btn-secondary" onclick="updateAnalytics()">Update</button>
+                    </div>
+                </div>
+
+                <div class="analytics-content">
+                    <canvas id="analytics-chart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Modal -->
+        <div id="chat-modal" class="modal">
+            <div class="modal-content chat-modal-content">
+                <div class="modal-header">
+                    <h3 id="chat-modal-title">Conversation</h3>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" id="takeover-btn" onclick="takeoverConversation()">Take Over</button>
+                        <button class="btn btn-secondary" onclick="closeChatModal()">Close</button>
+                    </div>
+                </div>
+                <div class="chat-messages" id="modal-messages">
+                    <!-- Messages will be populated here -->
+                </div>
+                <div class="chat-input-container" id="agent-input-container" style="display: none;">
+                    <input type="text" id="agent-message-input" placeholder="Type your message...">
+                    <button class="btn btn-primary" onclick="sendAgentMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Modal -->
+        <div id="product-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="product-modal-title">Add Product</h3>
+                    <button class="close-btn" onclick="closeProductModal()">×</button>
+                </div>
+                <form id="product-form">
+                    <div class="form-group">
+                        <label>Product Name</label>
+                        <input type="text" id="product-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="product-description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="number" id="product-price" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <input type="text" id="product-category" required>
+                    </div>
+                    <div class="form-group">
+                        <label>AI Context (Detailed info for AI responses)</label>
+                        <textarea id="product-ai-context" rows="4" required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

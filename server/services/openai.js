@@ -1,0 +1,121 @@
+const OpenAI = require('openai');
+const Product = require('../models/Product');
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+class OpenAIService {
+  constructor() {
+    this.systemPrompt = `You are a helpful customer service representative for HDC store. You should:
+
+1. Be friendly, professional, and helpful
+2. Answer questions about products based on the product information provided
+3. If you don't know something specific, politely say so and offer to connect them with a human agent
+4. Keep responses concise but informative
+5. Use a conversational tone that feels natural
+6. If asked about shipping, returns, or policies, provide general helpful guidance but suggest contacting support for specifics
+
+Product Information will be provided in the context when available.`;
+  }
+
+  async generateResponse(message, conversationHistory = [], customerInfo = {}) {
+    try {
+      // Get relevant product information
+      const productContext = await this.getProductContext(message);
+      
+      // Build conversation context
+      const messages = [
+        { role: 'system', content: this.buildSystemPrompt(productContext, customerInfo) },
+        ...this.formatConversationHistory(conversationHistory),
+        { role: 'user', content: message }
+      ];
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: messages,
+        max_tokens: 300,
+        temperature: 0.7,
+      });
+
+      const response = completion.choices[0].message.content;
+      
+      // Calculate realistic typing duration (words per minute simulation)
+      const typingDuration = this.calculateTypingDuration(response);
+
+      return {
+        content: response,
+        typingDuration,
+        tokensUsed: completion.usage.total_tokens,
+        model: 'gpt-4'
+      };
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      return {
+        content: "I'm having trouble processing your request right now. Let me connect you with a human agent who can help you better.",
+        typingDuration: 2000,
+        tokensUsed: 0,
+        model: 'fallback'
+      };
+    }
+  }
+
+  async getProductContext(message) {
+    try {
+      // Simple keyword matching - could be enhanced with vector search
+      const products = await Product.find({
+        $text: { $search: message }
+      }).limit(5);
+
+      if (products.length === 0) {
+        // Fallback: get some popular products
+        const fallbackProducts = await Product.find({}).limit(3);
+        return fallbackProducts.map(p => p.aiContext).join('\n\n');
+      }
+
+      return products.map(product => 
+        `Product: ${product.name}\nPrice: $${product.price}\nDescription: ${product.aiContext}`
+      ).join('\n\n');
+    } catch (error) {
+      console.error('Error fetching product context:', error);
+      return '';
+    }
+  }
+
+  buildSystemPrompt(productContext, customerInfo) {
+    let prompt = this.systemPrompt;
+    
+    if (customerInfo.name) {
+      prompt += `\n\nCustomer's name is ${customerInfo.name}.`;
+    }
+    
+    if (productContext) {
+      prompt += `\n\nRelevant Product Information:\n${productContext}`;
+    }
+    
+    return prompt;
+  }
+
+  formatConversationHistory(history) {
+    return history.slice(-10).map(msg => ({
+      role: msg.sender === 'customer' ? 'user' : 'assistant',
+      content: msg.content
+    }));
+  }
+
+  calculateTypingDuration(text) {
+    // Simulate human typing: ~40-60 WPM with some variation
+    const words = text.split(' ').length;
+    const baseWPM = 45;
+    const variation = Math.random() * 20 - 10; // ±10 WPM variation
+    const actualWPM = baseWPM + variation;
+    
+    // Convert to milliseconds, add base delay
+    const typingTime = (words / actualWPM) * 60 * 1000;
+    const baseDelay = 1000; // 1 second base delay
+    
+    return Math.max(typingTime + baseDelay, 1500); // Minimum 1.5 seconds
+  }
+}
+
+module.exports = new OpenAIService();

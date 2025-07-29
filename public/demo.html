@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HDC Store - Live Chat Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .hero p {
+            font-size: 20px;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .products {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+        
+        .product {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .product:hover {
+            transform: translateY(-5px);
+        }
+        
+        .product-image {
+            height: 200px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+        
+        .product-info {
+            padding: 20px;
+        }
+        
+        .product-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .product-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+        
+        .product-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .chat-demo {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .chat-demo h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .chat-demo p {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .chat-instructions {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .chat-instructions h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+        }
+        
+        .chat-instructions ol {
+            color: #333;
+            line-height: 1.8;
+        }
+        
+        .admin-link {
+            display: inline-block;
+            background: #2c3e50;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+        
+        .admin-link:hover {
+            background: #34495e;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>HDC Store</h1>
+        <p>Premium Products with AI-Powered Customer Support</p>
+    </div>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Welcome to HDC Store</h1>
+            <p>Discover our premium collection of products, all backed by our intelligent customer support system.</p>
+        </div>
+
+        <div class="products">
+            <div class="product">
+                <div class="product-image">🎧</div>
+                <div class="product-info">
+                    <div class="product-name">Premium Wireless Headphones</div>
+                    <div class="product-price">$299.99</div>
+                    <div class="product-description">High-quality wireless headphones with active noise cancellation and 30-hour battery life.</div>
+                    <button class="btn">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="product">
+                <div class="product-image">⌚</div>
+                <div class="product-info">
+                    <div class="product-name">Smart Fitness Tracker</div>
+                    <div class="product-price">$199.99</div>
+                    <div class="product-description">Advanced fitness tracker with heart rate monitoring, GPS, and 7-day battery life.</div>
+                    <button class="btn">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="product">
+                <div class="product-image">🪑</div>
+                <div class="product-info">
+                    <div class="product-name">Ergonomic Office Chair</div>
+                    <div class="product-price">$449.99</div>
+                    <div class="product-description">Professional ergonomic chair with lumbar support and breathable mesh design.</div>
+                    <button class="btn">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="product">
+                <div class="product-image">🧴</div>
+                <div class="product-info">
+                    <div class="product-name">Organic Skincare Set</div>
+                    <div class="product-price">$89.99</div>
+                    <div class="product-description">Complete 4-step organic skincare routine with natural ingredients and eco-friendly packaging.</div>
+                    <button class="btn">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-demo">
+            <h2>🤖 Try Our AI-Powered Live Chat</h2>
+            <p>Have questions about our products? Our intelligent chat system is here to help!</p>
+            
+            <div class="chat-instructions">
+                <h3>How to Test the Live Chat:</h3>
+                <ol>
+                    <li>Look for the chat icon in the bottom-right corner of this page</li>
+                    <li>Click the icon to open the chat widget</li>
+                    <li>Follow the survey prompts (enter your name and email)</li>
+                    <li>Ask questions about our products - try asking about features, pricing, or recommendations</li>
+                    <li>Experience human-like response timing and typing indicators</li>
+                </ol>
+            </div>
+            
+            <p><strong>Sample questions to try:</strong></p>
+            <ul style="text-align: left; max-width: 500px; margin: 0 auto;">
+                <li>"What headphones do you recommend for travel?"</li>
+                <li>"Tell me about the fitness tracker's battery life"</li>
+                <li>"Do you have any chairs good for back pain?"</li>
+                <li>"What's included in the skincare set?"</li>
+                <li>"What's your return policy?"</li>
+            </ul>
+            
+            <a href="/admin" class="admin-link">🛠️ Admin Dashboard</a>
+        </div>
+    </div>
+
+    <!-- HDC Live Chat Widget -->
+    <script src="/widget/chat-widget.js"></script>
+    <script>
+        HDCLiveChat.init({
+            apiUrl: window.location.origin,
+            storeId: 'hdc-demo-store'
+        });
+    </script>
+</body>
+</html>
