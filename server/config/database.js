@@ -1,22 +1,21 @@
 const { Sequelize } = require('sequelize');
 
-let sequelize;
+// Initialize sequelize immediately so models can use it
+const databaseUrl = process.env.DATABASE_URL || 'postgresql://localhost:5432/hdc_live_chat';
+
+const sequelize = new Sequelize(databaseUrl, {
+  dialect: 'postgres',
+  logging: false, // Set to console.log to see SQL queries
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  }
+});
 
 const initializeDatabase = async () => {
   try {
-    const databaseUrl = process.env.DATABASE_URL || 'postgresql://localhost:5432/hdc_live_chat';
-    
-    sequelize = new Sequelize(databaseUrl, {
-      dialect: 'postgres',
-      logging: false, // Set to console.log to see SQL queries
-      pool: {
-        max: 5,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-      }
-    });
-    
     await sequelize.authenticate();
     console.log('✅ Connected to PostgreSQL');
     
