@@ -62,17 +62,29 @@ Product Information will be provided in the context when available.`;
 
   async getProductContext(message) {
     try {
-      // Simple keyword matching - could be enhanced with vector search
-      const products = await Product.find({
-        $text: { $search: message }
-      }).limit(5);
+      console.log('🔍 Getting product context for message:', message);
+      
+      // PostgreSQL text search using ILIKE for keyword matching
+      const { Op } = require('sequelize');
+      const products = await Product.findAll({
+        where: {
+          [Op.or]: [
+            { name: { [Op.iLike]: `%${message}%` } },
+            { description: { [Op.iLike]: `%${message}%` } },
+            { aiContext: { [Op.iLike]: `%${message}%` } }
+          ]
+        },
+        limit: 5
+      });
 
       if (products.length === 0) {
+        console.log('📦 No specific products found, getting fallback products');
         // Fallback: get some popular products
-        const fallbackProducts = await Product.find({}).limit(3);
+        const fallbackProducts = await Product.findAll({ limit: 3 });
         return fallbackProducts.map(p => p.aiContext).join('\n\n');
       }
 
+      console.log(`📦 Found ${products.length} relevant products`);
       return products.map(product => 
         `Product: ${product.name}\nPrice: $${product.price}\nDescription: ${product.aiContext}`
       ).join('\n\n');
@@ -104,17 +116,17 @@ Product Information will be provided in the context when available.`;
   }
 
   calculateTypingDuration(text) {
-    // Simulate human typing: ~40-60 WPM with some variation
+    // Faster typing simulation for better user experience
     const words = text.split(' ').length;
-    const baseWPM = 45;
+    const baseWPM = 120; // Much faster typing speed
     const variation = Math.random() * 20 - 10; // ±10 WPM variation
     const actualWPM = baseWPM + variation;
     
-    // Convert to milliseconds, add base delay
+    // Convert to milliseconds, add small base delay
     const typingTime = (words / actualWPM) * 60 * 1000;
-    const baseDelay = 1000; // 1 second base delay
+    const baseDelay = 500; // Reduced base delay
     
-    return Math.max(typingTime + baseDelay, 1500); // Minimum 1.5 seconds
+    return Math.max(typingTime + baseDelay, 800); // Minimum 0.8 seconds
   }
 }
 

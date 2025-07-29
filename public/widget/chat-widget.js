@@ -408,7 +408,11 @@
     });
 
     state.socket.on('message_received', (message) => {
-      displayMessage(message);
+      // Only display messages from server (AI/agent), not customer messages (to avoid duplicates)
+      if (message.sender !== 'customer') {
+        console.log('HDC Chat: Received server message:', message);
+        displayMessage(message);
+      }
     });
 
     state.socket.on('typing_indicator', (data) => {
