@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
-    "build": "npm run build:widget",
-    "build:widget": "webpack --config webpack.config.js"
+    "seed": "node server/seedData.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -19,9 +18,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10",
-    "webpack": "^5.101.0",
-    "webpack-cli": "^5.1.4"
+    "nodemon": "^3.1.10"
   },
   "keywords": [
     "shopify",
