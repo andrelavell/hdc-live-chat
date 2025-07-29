@@ -82,6 +82,11 @@ router.get('/conversations/:conversationId', async (req, res) => {
 // Get live conversations dashboard data
 router.get('/dashboard', async (req, res) => {
   try {
+    console.log('📊 Loading dashboard data...');
+    const { Op } = require('sequelize');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const [
       totalConversations,
       liveConversations,
@@ -89,20 +94,26 @@ router.get('/dashboard', async (req, res) => {
       agentTakeoverCount,
       todayConversations
     ] = await Promise.all([
-      Conversation.countDocuments(),
-      Conversation.countDocuments({ isLive: true }),
-      Conversation.countDocuments({ status: 'ai_active', isLive: true }),
-      Conversation.countDocuments({ status: 'agent_takeover', isLive: true }),
-      Conversation.countDocuments({
-        createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+      Conversation.count(),
+      Conversation.count({ where: { isLive: true } }),
+      Conversation.count({ where: { status: 'ai_active', isLive: true } }),
+      Conversation.count({ where: { status: 'agent_takeover', isLive: true } }),
+      Conversation.count({
+        where: {
+          createdAt: { [Op.gte]: today }
+        }
       })
     ]);
 
     // Get recent live conversations
-    const recentLive = await Conversation.find({ isLive: true })
-      .sort({ updatedAt: -1 })
-      .limit(10)
-      .select('id customerInfo status agentId updatedAt messages');
+    const recentLive = await Conversation.findAll({
+      where: { isLive: true },
+      order: [['updatedAt', 'DESC']],
+      limit: 10,
+      attributes: ['id', 'customerInfo', 'status', 'agentId', 'updatedAt', 'messages']
+    });
+
+    console.log('📊 Dashboard stats:', { totalConversations, liveConversations, aiActiveCount, agentTakeoverCount, todayConversations });
 
     res.json({
       stats: {
@@ -117,7 +128,7 @@ router.get('/dashboard', async (req, res) => {
         customerInfo: conv.customerInfo,
         status: conv.status,
         agentId: conv.agentId,
-        lastMessage: conv.messages[conv.messages.length - 1],
+        lastMessage: conv.messages && conv.messages.length > 0 ? conv.messages[conv.messages.length - 1] : null,
         updatedAt: conv.updatedAt
       }))
     });
