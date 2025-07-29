@@ -1,5 +1,30 @@
-// Settings Management Functions
-window.saveAIPrompt = async function() {
+// Settings Management Functions - Wrapped in IIFE to avoid global scope pollution
+(() => {
+    // Tab switching functionality
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Update tab content
+            const tabName = btn.dataset.tab;
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        });
+    });
+    
+    // Temperature slider handler
+    const tempSlider = document.getElementById('ai-temperature');
+    if (tempSlider) {
+        tempSlider.addEventListener('input', e => {
+            document.getElementById('temperature-value').textContent = e.target.value;
+        });
+    }
+
+    // Global functions for onclick handlers
+    window.saveAIPrompt = async function() {
     const prompt = document.getElementById('ai-system-prompt').value;
     
     if (!prompt.trim()) {
@@ -155,34 +180,6 @@ async function loadSettings() {
     }
 }
 
-// Setup settings functionality when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // Setup tab switching
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabName = btn.dataset.tab;
-            
-            // Update tab buttons
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // Update tab content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(`${tabName}-tab`).classList.add('active');
-        });
-    });
-    
-    // Temperature slider handler
-    const tempSlider = document.getElementById('ai-temperature');
-    if (tempSlider) {
-        tempSlider.addEventListener('input', (e) => {
-            document.getElementById('temperature-value').textContent = e.target.value;
-        });
-    }
-    
     // Load settings when settings view is opened
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
@@ -199,4 +196,4 @@ document.addEventListener('DOMContentLoaded', function() {
     if (settingsView) {
         observer.observe(settingsView, { attributes: true });
     }
-});
+})();

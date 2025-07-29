@@ -55,9 +55,9 @@ class AdminDashboard {
             });
         });
         
-        // Setup settings tab functionality
-        this.setupSettingsTabs();
-        this.setupSettingsHandlers();
+        // Don't call settings methods here - let settings.js own the tab UI
+        // this.setupSettingsTabs();
+        // this.setupSettingsHandlers();
 
         // Search and filters
         document.getElementById('search-input')?.addEventListener('input', 
@@ -93,33 +93,34 @@ class AdminDashboard {
     switchView(viewName) {
         // Hide all views
         document.querySelectorAll('.view').forEach(view => {
-            view.classList.remove('active');
+            view.style.display = 'none';
         });
 
         // Show selected view
         const targetView = document.getElementById(`${viewName}-view`);
         if (targetView) {
-            targetView.classList.add('active');
-            this.currentView = viewName;
+            targetView.style.display = 'block';
+        }
 
-            // Load data for the view
-            switch (viewName) {
-                case 'dashboard':
-                    this.loadDashboardData();
-                    break;
-                case 'conversations':
-                    this.loadConversations();
-                    break;
-                case 'products':
-                    this.loadProducts();
-                    break;
-                case 'analytics':
-                    this.loadAnalytics();
-                    break;
-                case 'settings':
-                    this.loadSettings();
-                    break;
-            }
+        this.currentView = viewName;
+
+        // Load data for specific views
+        switch (viewName) {
+            case 'dashboard':
+                this.loadDashboardData();
+                break;
+            case 'conversations':
+                this.loadConversations();
+                break;
+            case 'products':
+                this.loadProducts();
+                break;
+            case 'analytics':
+                this.loadAnalytics();
+                break;
+            case 'settings':
+                this.loadSettings();
+                break;
         }
     }
 
