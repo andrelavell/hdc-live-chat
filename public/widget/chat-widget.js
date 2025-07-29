@@ -3,7 +3,7 @@
 
   // Configuration
   let config = {
-    apiUrl: 'http://localhost:3000',
+    apiUrl: window.location.origin,
     storeId: 'default'
   };
 
