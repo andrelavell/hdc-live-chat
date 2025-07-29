@@ -548,6 +548,88 @@ class AdminDashboard {
             timeout = setTimeout(later, wait);
         };
     }
+
+    // Settings Management Methods
+    setupSettingsTabs() {
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                this.switchSettingsTab(tabName);
+            });
+        });
+        
+        // Temperature slider handler
+        const tempSlider = document.getElementById('ai-temperature');
+        if (tempSlider) {
+            tempSlider.addEventListener('input', (e) => {
+                document.getElementById('temperature-value').textContent = e.target.value;
+            });
+        }
+    }
+
+    setupSettingsHandlers() {
+        // Settings handlers are set up in settings.js
+    }
+
+    switchSettingsTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
+
+    async loadSettings() {
+        try {
+            const response = await fetch('/api/settings');
+            const settings = await response.json();
+            
+            // Populate form fields with current settings
+            settings.forEach(setting => {
+                const element = document.getElementById(setting.key.replace('_', '-'));
+                if (element) {
+                    if (element.type === 'range') {
+                        element.value = setting.value;
+                        if (setting.key === 'ai_temperature') {
+                            document.getElementById('temperature-value').textContent = setting.value;
+                        }
+                    } else {
+                        element.value = setting.value;
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error loading settings:', error);
+            this.showSettingsMessage('Error loading settings', 'error');
+        }
+    }
+
+    showSettingsMessage(message, type) {
+        let messageDiv = document.querySelector('.settings-message');
+        if (!messageDiv) {
+            messageDiv = document.createElement('div');
+            messageDiv.className = 'settings-message';
+            const settingsContent = document.querySelector('.settings-content');
+            if (settingsContent) {
+                settingsContent.insertBefore(messageDiv, settingsContent.firstChild);
+            }
+        }
+        
+        messageDiv.textContent = message;
+        messageDiv.className = `settings-message ${type}`;
+        messageDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            messageDiv.style.display = 'none';
+        }, 5000);
+    }
 }
 
 // Global functions for onclick handlers
