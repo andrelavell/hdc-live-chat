@@ -202,10 +202,13 @@ const setupSocketHandlers = (io) => {
         
         if (!conversation) return;
 
-        conversation.status = 'agent_takeover';
-        conversation.agentId = agentId;
-        conversation.agentTakeoverAt = new Date();
-        await conversation.save();
+        // Update conversation with PostgreSQL syntax
+        await conversation.update({
+          status: 'agent_takeover',
+          agentId: agentId,
+          agentTakeoverAt: new Date()
+        });
+        console.log('👤 Agent takeover saved:', agentId);
 
         // Join agent to conversation room
         socket.join(conversationId);
@@ -242,8 +245,10 @@ const setupSocketHandlers = (io) => {
           agentId
         };
 
-        conversation.messages.push(agentMessage);
-        await conversation.save();
+        // Update messages array and save (PostgreSQL JSONB)
+        const updatedMessages = [...(conversation.messages || []), agentMessage];
+        await conversation.update({ messages: updatedMessages });
+        console.log('💾 Agent message saved to database:', agentMessage.id);
 
         io.to(conversationId).emit('message_received', agentMessage);
 
@@ -303,8 +308,10 @@ async function handleAIResponse(conversation, customerMessage, io) {
         }
       };
 
-      conversation.messages.push(aiMessage);
-      await conversation.save();
+      // Update messages array and save (PostgreSQL JSONB)
+      const updatedMessages = [...(conversation.messages || []), aiMessage];
+      await conversation.update({ messages: updatedMessages });
+      console.log('💾 AI message saved to database:', aiMessage.id);
 
       // Hide typing indicator and send message
       io.to(conversation.id).emit('typing_indicator', { 
