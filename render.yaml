@@ -10,7 +10,7 @@ services:
         value: production
       - key: PORT
         value: 10000
-      # Add OPENAI_API_KEY and MONGODB_URI in Render dashboard
+      # Add OPENAI_API_KEY and DATABASE_URL in Render dashboard
 
 databases:
   - name: hdc-chat-postgres

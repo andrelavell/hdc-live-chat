@@ -19,7 +19,7 @@ A sophisticated live chat widget for Shopify stores with OpenAI integration and 
 - 📈 Conversation analytics
 
 ## Tech Stack
-- **Backend**: Node.js, Express, Socket.IO, MongoDB
+- **Backend**: Node.js, Express, Socket.IO, PostgreSQL
 - **AI**: OpenAI GPT API
 - **Frontend**: Vanilla JavaScript (embeddable widget)
 - **Real-time**: WebSocket connections
@@ -34,7 +34,7 @@ A sophisticated live chat widget for Shopify stores with OpenAI integration and 
 2. **Environment variables** - Create `.env` file:
    ```
    OPENAI_API_KEY=your_openai_api_key
-   MONGODB_URI=your_mongodb_connection_string
+   DATABASE_URL=your_postgresql_connection_string
    PORT=3000
    ```
 
